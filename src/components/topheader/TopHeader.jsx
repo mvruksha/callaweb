@@ -24,11 +24,11 @@ export default function TopHeader() {
           </Link>
 
           <Link
-            href="tel:+91-99809-03360"
+            href="tel:+918105114625"
             className="flex items-center space-x-1 hover:text-yellow-600 transition"
           >
             <FaPhoneAlt className="text-gray-700" />
-            <span className="hidden sm:inline">+91-99809-03360</span>
+            <span className="hidden sm:inline">+91 8105114625</span>
           </Link>
         </div>
 

@@ -83,14 +83,14 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <Link href="tel:+91-99809-03360/83105-80615" className="hover:text-red-500">
-                  +91-99809-03360 / 83105-80615
+                <Link href="tel:+918105114625" className="hover:text-red-500">
+                  +91 8105114625
                 </Link>
               </li>
               <li className="flex items-center gap-2">
                 <FaWhatsapp className="w-4 h-4" />
                 <Link
-                  href="https://wa.me/919980903360"
+                  href="https://wa.me/918105114625"
                   target="_blank"
                   className="hover:text-green-400"
                 >
