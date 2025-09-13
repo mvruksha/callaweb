@@ -124,20 +124,6 @@ const ProductDetails = () => {
                   )}
                 </div>
 
-                {/* Flavours */}
-                {flavours && flavours.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {flavours.map((flavour, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 bg-purple-100 text-purple-800 rounded-xs text-sm font-medium"
-                      >
-                        {flavour}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
                 {/* Weight Selector */}
                 {weights && weights.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
