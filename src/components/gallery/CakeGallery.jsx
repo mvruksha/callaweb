@@ -93,12 +93,15 @@ export default class CakeGallery extends Component {
                   <h3 className="font-semibold text-sm sm:text-base">
                     {cake.title}
                   </h3>
-                  <p className="text-xs sm:text-sm">
-                    ₹{cake.prices["1 Kg"].discountedPrice}{" "}
-                    <span className="line-through text-gray-300">
-                      ₹{cake.prices["1 Kg"].originalPrice}
-                    </span>
-                  </p>
+                  {/* FIX APPLIED HERE */}
+                  {cake?.prices?.["1 Kg"]?.discountedPrice && (
+                    <p className="text-xs sm:text-sm">
+                      ₹{cake.prices["1 Kg"].discountedPrice}{" "}
+                      <span className="line-through text-gray-300">
+                        ₹{cake.prices["1 Kg"].originalPrice}
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -159,12 +162,16 @@ export default class CakeGallery extends Component {
                   {selectedCake.title}
                 </h3>
                 <p className="mb-4 text-gray-600">{selectedCake.description}</p>
-                <p className="text-xl md:text-2xl font-semibold text-purple-900">
-                  ₹{selectedCake.prices["1 Kg"].discountedPrice}{" "}
-                  <span className="line-through text-gray-400">
-                    ₹{selectedCake.prices["1 Kg"].originalPrice}
-                  </span>
-                </p>
+
+                {/* FIX APPLIED HERE */}
+                {selectedCake?.prices?.["1 Kg"]?.discountedPrice && (
+                  <p className="text-xl md:text-2xl font-semibold text-purple-900">
+                    ₹{selectedCake.prices["1 Kg"].discountedPrice}{" "}
+                    <span className="line-through text-gray-400">
+                      ₹{selectedCake.prices["1 Kg"].originalPrice}
+                    </span>
+                  </p>
+                )}
               </div>
 
               {/* Close button for desktop */}

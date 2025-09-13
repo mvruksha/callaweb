@@ -82,8 +82,8 @@ const ContactSection = () => {
 
           <div className="space-y-1">
             <p className="font-semibold flex items-center gap-2">📞 Phone:</p>
-            <a href="tel:+919164398736" className="hover:underline">
-              +91 91643 98736
+            <a href="tel:+919980903360" className="hover:underline">
+              +91-99809-03360 / 83105-80615
             </a>
           </div>
 
@@ -143,7 +143,7 @@ const ContactSection = () => {
                 name="number"
                 required
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-400 focus:outline-none transition"
-                placeholder="+91 8105114625"
+                placeholder="+91 9980903360"
               />
             </div>
 
