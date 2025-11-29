@@ -97,7 +97,7 @@ const AdminNavbar = () => {
   return (
     <header
       ref={navRef}
-      className={`fixed w-full z-50 top-9 transition-all duration-300 ${
+      className={`fixed w-full z-50 top-0 transition-all duration-300 ${
         scrolled
           ? "bg-white/95 backdrop-blur-md text-gray-800 shadow-md py-3"
           : "bg-gradient-to-r from-[#4B006E] via-[#6A1B9A] to-[#8E24AA] text-white py-4"

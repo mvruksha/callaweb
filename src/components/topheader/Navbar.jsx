@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  Suspense,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,10 +25,11 @@ import { SidebarContext } from "../../../contexts/SidebarContext";
 import { CartContext } from "../../../contexts/CartContext";
 import Sidebar from "../cakemenu/sidebar/Sidebar";
 
-export default function Navbar() {
+// --- 1. INTERNAL COMPONENT: Contains Logic using useSearchParams ---
+function NavbarContent() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); // This hook requires Suspense
   const navRef = useRef(null);
 
   // --- UI States ---
@@ -36,23 +43,22 @@ export default function Navbar() {
   const { setIsOpen } = useContext(SidebarContext);
   const { itemAmount } = useContext(CartContext);
 
-  // --- 1. HANDLE SCROLL ---
+  // --- HANDLE SCROLL ---
   useEffect(() => {
     const handleScroll = () => {
-      // Threshold 10px matches TopHeader logic
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // --- 2. AUTO-CLOSE ---
+  // --- AUTO-CLOSE ---
   useEffect(() => {
     setIsMenuOpen(false);
     setMobileSubmenuOpen(null);
   }, [pathname, searchParams]);
 
-  // --- 3. CLICK OUTSIDE ---
+  // --- CLICK OUTSIDE ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (navRef.current && !navRef.current.contains(event.target)) {
@@ -95,12 +101,11 @@ export default function Navbar() {
     <>
       <header
         ref={navRef}
-        // FIX: Added 'bg-[#4B006E]' here as a fallback to prevent white flash
         className={`fixed w-full z-40 transition-all duration-300 ease-in-out border-b border-white/10 bg-[#4B006E]
           ${
             isScrolled
-              ? "top-0 py-2 bg-opacity-95 backdrop-blur-md shadow-xl" // Scrolled state
-              : "top-10 py-3 bg-gradient-to-r from-[#4B006E] via-[#6A1B9A] to-[#8E24AA]" // Initial State
+              ? "top-0 py-2 bg-opacity-95 backdrop-blur-md shadow-xl"
+              : "top-10 py-3 bg-gradient-to-r from-[#4B006E] via-[#6A1B9A] to-[#8E24AA]"
           } text-white`}
       >
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -341,5 +346,19 @@ export default function Navbar() {
       {/* Sidebar Component */}
       <Sidebar />
     </>
+  );
+}
+
+// --- 2. EXPORTED WRAPPER: Handles the Suspense Boundary ---
+export default function Navbar() {
+  return (
+    // Fallback UI matching the navbar height/color to prevent layout shift
+    <Suspense
+      fallback={
+        <div className="fixed w-full h-20 bg-[#4B006E] z-40 top-0 border-b border-white/10" />
+      }
+    >
+      <NavbarContent />
+    </Suspense>
   );
 }
