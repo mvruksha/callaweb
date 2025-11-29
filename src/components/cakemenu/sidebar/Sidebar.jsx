@@ -3,147 +3,226 @@
 import React, { useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { IoMdArrowForward } from "react-icons/io";
-import { FiTrash2 } from "react-icons/fi";
+import { IoMdArrowForward, IoMdClose } from "react-icons/io";
+import { FiTrash2, FiShoppingBag, FiTruck } from "react-icons/fi";
 
-import CartItem from "../cartItem/CartItem";
+// Make sure these paths are correct for your project structure
+
 import { SidebarContext } from "../../../../contexts/SidebarContext";
 import { CartContext } from "../../../../contexts/CartContext";
+import CartItem from "../cartItem/CartItem";
 
 const Sidebar = () => {
   const { isOpen, handleClose } = useContext(SidebarContext);
   const { cart, clearCart, itemAmount, total } = useContext(CartContext);
-
   const [mounted, setMounted] = useState(false);
 
-  // ensure this runs only on client
+  // --- CONFIGURATION ---
+  const FREE_SHIPPING_THRESHOLD = 2000;
+
+  // --- CALCULATIONS ---
+  const subTotal = parseFloat(total || 0);
+  const amountToFreeShipping = FREE_SHIPPING_THRESHOLD - subTotal;
+  const progressPercentage = Math.min(
+    (subTotal / FREE_SHIPPING_THRESHOLD) * 100,
+    100
+  );
+
+  // --- EFFECTS ---
+
+  // 1. Hydration check
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // prevent background scroll
+  // 2. Prevent background scroll when open
   useEffect(() => {
     if (!mounted) return;
     const el = document.documentElement;
     if (isOpen) {
       const prev = el.style.overflow;
-      el.style.overflow = "hidden";
+      el.style.overflow = "hidden"; // Lock scroll
       return () => {
-        el.style.overflow = prev || "";
+        el.style.overflow = prev || ""; // Unlock scroll
       };
     }
   }, [isOpen, mounted]);
 
+  // 3. ✅ AUTO-CLOSE if cart becomes empty
+  useEffect(() => {
+    if (isOpen && cart.length === 0) {
+      // Small delay to let the user see the item disappear before closing
+      const timer = setTimeout(() => {
+        handleClose();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [cart.length, isOpen, handleClose]);
+
   if (!mounted) return null;
 
-  // ✅ total savings = (original - discounted) × qty
-  const totalSavings = cart.reduce(
-    (acc, item) =>
-      acc +
-      ((item.originalPrice || 0) - (item.discountedPrice || 0)) *
-        (item.amount || 1),
-    0
-  );
+  // Calculate Savings
+  const totalSavings = cart.reduce((acc, item) => {
+    // Handle logic if item has original price in different locations based on your data structure
+    const regular = item.originalPrice || item.price;
+    const selling = item.price;
+    return acc + (regular - selling) * (item.amount || 1);
+  }, 0);
 
   return createPortal(
     <>
-      {/* Overlay */}
+      {/* --- OVERLAY --- */}
       <div
         onClick={handleClose}
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 z-[9998] ${
+        className={`fixed inset-0 bg-gray-900/60 backdrop-blur-[2px] transition-opacity duration-300 z-[9998] ${
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       />
 
-      {/* Sidebar */}
+      {/* --- SIDEBAR DRAWER --- */}
       <aside
-        role="dialog"
-        aria-modal="true"
-        className={`fixed inset-y-0 right-0 bg-white shadow-xl z-[9999]
-        w-screen max-w-[95vw] sm:max-w-[380px] md:max-w-[420px] lg:max-w-[420px]
-        transition-transform duration-300 ease-in-out rounded-xs
+        className={`fixed inset-y-0 right-0 z-[9999]
+        bg-white shadow-2xl transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)
+        /* Responsive Widths: 85% on mobile (leaving space), fixed width on desktop */
+        w-[85vw] sm:w-[450px]
+        flex flex-col h-full
         ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="flex h-full flex-col">
-          {/* Header */}
-          <header className="shrink-0 sticky top-0 bg-white border-b border-gray-400 mx-4">
-            <div className="flex items-center justify-between py-5 px-4 md:px-6">
-              <div className="uppercase text-sm font-semibold tracking-wide">
-                Shopping Bag ({itemAmount})
+        {/* 1. HEADER */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white z-10">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-lg text-gray-800 tracking-tight">
+              My Cart
+            </span>
+            <div className="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-0.5 rounded-full">
+              {itemAmount} items
+            </div>
+          </div>
+          <button
+            onClick={handleClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+          >
+            <IoMdClose size={24} />
+          </button>
+        </div>
+
+        {/* 2. FREE SHIPPING BAR (Upsell) */}
+        {cart.length > 0 && (
+          <div className="px-6 py-3 bg-purple-50/50 border-b border-purple-100">
+            <div className="flex items-center gap-2 text-sm font-medium text-purple-900 mb-2">
+              <FiTruck />
+              {amountToFreeShipping > 0 ? (
+                <span>
+                  Add{" "}
+                  <span className="font-bold">
+                    ₹{amountToFreeShipping.toFixed(0)}
+                  </span>{" "}
+                  for{" "}
+                  <span className="text-green-600 font-bold">
+                    Free Shipping
+                  </span>
+                </span>
+              ) : (
+                <span className="text-green-600">
+                  You've unlocked Free Shipping! 🎉
+                </span>
+              )}
+            </div>
+            <div className="w-full bg-purple-200 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-green-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 3. CART ITEMS (Scrollable) */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
+          {cart.length > 0 ? (
+            <div className="flex flex-col gap-y-2">
+              {cart.map((item, idx) => (
+                // Reusing your advanced CartItem component
+                <div
+                  key={`${item._id || item.id}-${item.selectedWeight}-${
+                    item.selectedFlavor
+                  }-${idx}`}
+                  className="border border-gray-100 rounded-xl overflow-hidden shadow-sm"
+                >
+                  <CartItem item={item} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
+                <FiShoppingBag className="w-8 h-8 text-gray-300" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Your bag is empty
+                </h3>
+                <p className="text-gray-500 text-sm mt-1">
+                  Looks like you haven't added any sweets yet.
+                </p>
               </div>
               <button
                 onClick={handleClose}
-                aria-label="Close cart"
-                className="w-8 h-8 flex justify-center items-center hover:bg-gray-100 rounded-xs transition"
+                className="mt-4 px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-full hover:bg-purple-700 transition"
               >
-                <IoMdArrowForward className="text-2xl" />
+                Start Shopping
               </button>
             </div>
-          </header>
+          )}
+        </div>
 
-          {/* Items */}
-          <main className="grow overflow-y-auto overflow-x-hidden custom-scrollbar">
-            <div className="px-4 md:px-6 py-4 border-b border-gray-400 mx-4">
-              {cart.length > 0 ? (
-                <div className="flex flex-col gap-y-3">
-                  {cart.map((item, idx) => (
-                    <CartItem
-                      key={`${item._id || item.id}-${
-                        item.selectedWeight
-                      }-${idx}`}
-                      item={item}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-12 text-lg">
-                  Your cart is empty 🛒
-                </p>
-              )}
-            </div>
-          </main>
-
-          {/* Footer */}
-          <footer className="shrink-0 sticky bottom-0 bg-white border-t border-gray-400 mx-4">
-            <div className="px-4 md:px-6 py-4 space-y-4">
-              {/* Subtotal + clear button */}
-              <div className="flex w-full justify-between items-center text-base">
-                <div className="font-semibold">
-                  <span className="mr-2">Subtotal:</span>
-                  <span>Rs {Number(total || 0).toFixed(2)}</span>
-                </div>
-                <button
-                  onClick={clearCart}
-                  className="bg-red-500 hover:bg-red-600 text-white w-10 h-10 flex justify-center items-center text-xl rounded-xs shadow transition"
-                  aria-label="Clear cart"
-                >
-                  <FiTrash2 />
-                </button>
+        {/* 4. FOOTER (Sticky) */}
+        {cart.length > 0 && (
+          <div className="border-t border-gray-100 bg-white p-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+            {/* Totals Row */}
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-gray-500 font-medium">Subtotal</div>
+              <div className="text-xl font-extrabold text-gray-900">
+                ₹{subTotal.toFixed(2)}
               </div>
+            </div>
 
-              {/* ✅ Savings */}
-              {totalSavings > 0 && (
-                <div className="text-green-600 font-medium text-sm">
-                  You saved Rs {Number(totalSavings).toFixed(2)} 🎉
-                </div>
-              )}
+            {/* Savings Badge */}
+            {totalSavings > 0 && (
+              <div className="mb-4 bg-green-50 text-green-700 text-xs font-semibold px-3 py-2 rounded-lg text-center border border-green-100">
+                You are saving ₹{totalSavings.toFixed(2)} on this order!
+              </div>
+            )}
 
-              {/* Actions */}
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              {/* Clear Cart (Icon only for space efficiency) */}
+              <button
+                onClick={clearCart}
+                className="w-12 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors border border-red-100"
+                title="Clear Cart"
+              >
+                <FiTrash2 size={18} />
+              </button>
+
               <Link
                 href="/cart"
-                className="bg-gray-200 hover:bg-gray-300 flex p-3 justify-center items-center text-black w-full font-medium rounded-xs transition"
+                onClick={handleClose}
+                className="flex-1 flex items-center justify-center bg-gray-100 text-gray-900 font-semibold py-3.5 rounded-xl hover:bg-gray-200 transition-colors"
               >
                 View Cart
               </Link>
+
               <Link
                 href="/checkout"
-                className="bg-purple-950 hover:bg-gray-900 flex p-3 justify-center items-center text-white w-full font-medium rounded-xs transition"
+                onClick={handleClose}
+                className="flex-[2] flex items-center justify-center gap-2 bg-purple-900 text-white font-semibold py-3.5 rounded-xl hover:bg-purple-800 transition-colors shadow-lg shadow-purple-200"
               >
-                Checkout
+                Checkout <IoMdArrowForward />
               </Link>
             </div>
-          </footer>
-        </div>
+          </div>
+        )}
       </aside>
     </>,
     document.body

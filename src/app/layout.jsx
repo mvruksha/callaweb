@@ -1,7 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import TopHeader from "@/components/topheader/TopHeader";
-import ProductProvider from "../../contexts/ProductContext";
 import CartProvider from "../../contexts/CartContext";
 
 // Fonts
@@ -31,12 +30,10 @@ export default function RootLayout({ children }) {
       >
         <CartProvider>
           <SidebarProvider>
-            <ProductProvider>
-              <TopHeader />
-              <NavbarSwitcher />
-              {children}
-              <Footer />
-            </ProductProvider>
+            <TopHeader />
+            <NavbarSwitcher />
+            {children}
+            <Footer />
           </SidebarProvider>
         </CartProvider>
       </body>

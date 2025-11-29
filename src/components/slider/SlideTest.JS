@@ -60,7 +60,7 @@ const slides = [
   },
 ];
 
-const Slider = () => {
+const SlideTest = () => {
   const router = useRouter();
   const [loaded, setLoaded] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -69,7 +69,6 @@ const Slider = () => {
     loop: true,
     slides: { perView: 1 },
     mode: "snap",
-    drag: true,
     created(s) {
       setLoaded(true);
       s.moveToIdx(0, true, { duration: 0 });
@@ -113,12 +112,13 @@ const Slider = () => {
   }, [instanceRef]);
 
   return (
-    <section className="relative pt-[105px] sm:pt-[105px] lg:pt-[105px] group bg-purple-50/5">
+    // FIX: Changed 'mt' to 'pt' to avoid white gaps, and tuned spacing for the new headers
+    <section className="relative pt-[110px] sm:pt-[115px] lg:pt-[125px] pb-4 group bg-purple-50/5">
       {/* Keen Slider container */}
       <div
         ref={sliderRef}
-        // Using explicit heights to prevent expanding/jumping
-        className="keen-slider sm:h-[350px] h-[200px] relative rounded-xs overflow-hidden"
+        // FIX: Increased mobile height slightly (200px -> 250px) for better visibility
+        className="keen-slider h-[250px] sm:h-[350px] md:h-[400px] lg:h-[450px] relative rounded-lg overflow-hidden shadow-lg mx-2 sm:mx-4"
       >
         {slides.map((slide, index) => (
           <div
@@ -133,18 +133,18 @@ const Slider = () => {
                   alt={slide.title}
                   fill
                   quality={100}
-                  priority={index === 0}
+                  priority={index === 0} // Load first image faster
                   className="object-cover"
                 />
               </figure>
 
-              {/* Gradient overlay */}
+              {/* Gradient overlay for text readability */}
               <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent"></div>
 
               {/* Content */}
               <div
                 className="absolute left-4 sm:left-10 md:left-16 top-1/2 -translate-y-1/2 
-                w-[75%] sm:w-1/2 md:w-[45%] lg:w-[40%]
+                w-[70%] sm:w-1/2 md:w-[45%] lg:w-[40%]
                 text-white drop-shadow-lg z-10"
               >
                 <h2 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold mb-2 leading-tight tracking-tight">
@@ -175,43 +175,24 @@ const Slider = () => {
         ))}
       </div>
 
-      {/* --- CONTROLS / ARROWS --- */}
+      {/* Custom Left & Right Buttons - Only show after load to prevent layout shift */}
       {loaded && (
         <>
-          {/* Left Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               instanceRef.current?.prev();
             }}
-            // FIX APPLIED HERE:
-            // "opacity-100" makes it visible on mobile by default.
-            // "lg:opacity-0 lg:group-hover:opacity-100" restores the hover effect ONLY on large screens.
-            className="absolute left-2 sm:left-8 top-[55%] -translate-y-1/2 
-            w-8 h-8 sm:w-12 sm:h-12 
-            rounded-full flex items-center justify-center 
-            bg-white/20 hover:bg-white backdrop-blur-sm border border-white/30 
-            text-white hover:text-purple-700 
-            transition-all duration-300 z-20
-            opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+            className="absolute left-4 sm:left-8 top-[55%] -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white/20 hover:bg-white backdrop-blur-sm border border-white/30 text-white hover:text-purple-700 transition-all duration-300 opacity-0 group-hover:opacity-100 z-20"
           >
             <FaChevronLeft className="text-sm sm:text-lg" />
           </button>
-
-          {/* Right Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               instanceRef.current?.next();
             }}
-            // FIX APPLIED HERE:
-            className="absolute right-2 sm:right-8 top-[55%] -translate-y-1/2 
-            w-8 h-8 sm:w-12 sm:h-12 
-            rounded-full flex items-center justify-center 
-            bg-white/20 hover:bg-white backdrop-blur-sm border border-white/30 
-            text-white hover:text-purple-700 
-            transition-all duration-300 z-20
-            opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+            className="absolute right-4 sm:right-8 top-[55%] -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white/20 hover:bg-white backdrop-blur-sm border border-white/30 text-white hover:text-purple-700 transition-all duration-300 opacity-0 group-hover:opacity-100 z-20"
           >
             <FaChevronRight className="text-sm sm:text-lg" />
           </button>
@@ -219,7 +200,7 @@ const Slider = () => {
       )}
 
       {/* Progress Bar */}
-      <div className="absolute bottom-0 left-0 w-full px-2 sm:px-4">
+      <div className="absolute bottom-4 left-0 w-full px-2 sm:px-4">
         <div className="w-full h-1 bg-gray-200/30 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-100 ease-linear shadow-[0_0_10px_rgba(236,72,153,0.5)]"
@@ -231,4 +212,4 @@ const Slider = () => {
   );
 };
 
-export default Slider;
+export default SlideTest;

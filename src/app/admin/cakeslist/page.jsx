@@ -1,5 +1,5 @@
 import ProtectedRoute from "@/components/adminpage/adminLogin/ProtectedRoute";
-import CakesTable from "@/components/adminpage/cakespage/cakestablepage/CakesTable";
+import CTable from "@/components/adminpage/cakespage/cakestablepage/CTable";
 import Titletag from "@/components/titletag/Titletag";
 import React from "react";
 
@@ -11,7 +11,7 @@ const CakeList = () => {
         parent="admin"
         title="Cakes List"
       />
-      <CakesTable />
+      <CTable />
     </ProtectedRoute>
   );
 };
