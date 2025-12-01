@@ -5,7 +5,7 @@ import React, { createContext, useState, useEffect } from "react";
 export const CartContext = createContext();
 
 const CartProvider = ({ children }) => {
-  // Initialize cart from localStorage if available
+  // Initialize cart from localStorage
   const [cart, setCart] = useState(() => {
     if (typeof window !== "undefined") {
       const storedCart = localStorage.getItem("cart");
@@ -16,10 +16,10 @@ const CartProvider = ({ children }) => {
   const [itemAmount, setItemAmount] = useState(0);
   const [total, setTotal] = useState(0);
 
-  // Update totals and save to localStorage whenever cart changes
+  // Update totals and storage
   useEffect(() => {
     const newTotal = cart.reduce(
-      (acc, item) => acc + item.discountedPrice * item.amount,
+      (acc, item) => acc + item.price * item.amount,
       0
     );
     setTotal(newTotal);
@@ -27,79 +27,165 @@ const CartProvider = ({ children }) => {
     const newAmount = cart.reduce((acc, item) => acc + item.amount, 0);
     setItemAmount(newAmount);
 
-    // Save cart to localStorage
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  // Add product with weight support
-  const addToCart = (product, id, selectedWeight) => {
-    const priceObj = product.prices?.[selectedWeight] || {
-      originalPrice: 0,
-      discountedPrice: 0,
-    };
+  // --- ADD TO CART ---
+  const addToCart = (product, id) => {
+    // Ensure we store the 'variants' array so we can switch them later in the cart
+    const newItem = { ...product, amount: 1 };
 
-    const newItem = {
-      ...product,
-      id,
-      selectedWeight,
-      originalPrice: priceObj.originalPrice,
-      discountedPrice: priceObj.discountedPrice,
-      amount: 1,
-    };
-
-    const existingItem = cart.find(
-      (item) => item.id === id && item.selectedWeight === selectedWeight
-    );
-
-    if (existingItem) {
-      setCart(
-        cart.map((item) =>
-          item.id === id && item.selectedWeight === selectedWeight
-            ? { ...item, amount: item.amount + 1 }
-            : item
-        )
+    const cartItem = cart.find((item) => {
+      return (
+        item.id === id &&
+        item.selectedWeight === product.selectedWeight &&
+        item.selectedFlavor === product.selectedFlavor
       );
+    });
+
+    if (cartItem) {
+      const newCart = [...cart].map((item) => {
+        if (
+          item.id === id &&
+          item.selectedWeight === product.selectedWeight &&
+          item.selectedFlavor === product.selectedFlavor
+        ) {
+          return { ...item, amount: cartItem.amount + 1 };
+        }
+        return item;
+      });
+      setCart(newCart);
     } else {
       setCart([...cart, newItem]);
     }
   };
 
-  const removeFromCart = (id, selectedWeight) => {
-    setCart(
-      cart.filter(
-        (item) => !(item.id === id && item.selectedWeight === selectedWeight)
-      )
-    );
+  // --- REMOVE FROM CART ---
+  const removeFromCart = (id, selectedWeight, selectedFlavor) => {
+    const newCart = cart.filter((item) => {
+      return !(
+        item.id === id &&
+        item.selectedWeight === selectedWeight &&
+        item.selectedFlavor === selectedFlavor
+      );
+    });
+    setCart(newCart);
   };
 
+  // --- CLEAR CART ---
   const clearCart = () => setCart([]);
 
-  const increaseAmount = (id, selectedWeight) => {
-    setCart(
-      cart.map((item) =>
-        item.id === id && item.selectedWeight === selectedWeight
-          ? { ...item, amount: item.amount + 1 }
-          : item
-      )
-    );
+  // --- INCREASE AMOUNT ---
+  const increaseAmount = (id, selectedWeight, selectedFlavor) => {
+    const newCart = cart.map((item) => {
+      if (
+        item.id === id &&
+        item.selectedWeight === selectedWeight &&
+        item.selectedFlavor === selectedFlavor
+      ) {
+        return { ...item, amount: item.amount + 1 };
+      }
+      return item;
+    });
+    setCart(newCart);
   };
 
-  const decreaseAmount = (id, selectedWeight) => {
-    const item = cart.find(
-      (i) => i.id === id && i.selectedWeight === selectedWeight
+  // --- DECREASE AMOUNT ---
+  const decreaseAmount = (id, selectedWeight, selectedFlavor) => {
+    const cartItem = cart.find(
+      (item) =>
+        item.id === id &&
+        item.selectedWeight === selectedWeight &&
+        item.selectedFlavor === selectedFlavor
     );
-    if (!item) return;
 
-    if (item.amount > 1) {
-      setCart(
-        cart.map((cartItem) =>
-          cartItem.id === id && cartItem.selectedWeight === selectedWeight
-            ? { ...cartItem, amount: cartItem.amount - 1 }
-            : cartItem
-        )
-      );
+    if (cartItem) {
+      if (cartItem.amount > 1) {
+        const newCart = cart.map((item) => {
+          if (
+            item.id === id &&
+            item.selectedWeight === selectedWeight &&
+            item.selectedFlavor === selectedFlavor
+          ) {
+            return { ...item, amount: item.amount - 1 };
+          }
+          return item;
+        });
+        setCart(newCart);
+      } else {
+        removeFromCart(id, selectedWeight, selectedFlavor);
+      }
+    }
+  };
+
+  // --- [NEW] UPDATE VARIANT (WEIGHT/FLAVOR) ---
+  const updateItemVariant = (
+    id,
+    oldWeight,
+    oldFlavor,
+    newWeight,
+    newFlavor,
+    newPrice
+  ) => {
+    // 1. Check if an item with the NEW configuration already exists
+    const existingTargetItem = cart.find(
+      (item) =>
+        item.id === id &&
+        item.selectedWeight === newWeight &&
+        item.selectedFlavor === newFlavor
+    );
+
+    const currentItem = cart.find(
+      (item) =>
+        item.id === id &&
+        item.selectedWeight === oldWeight &&
+        item.selectedFlavor === oldFlavor
+    );
+
+    if (!currentItem) return;
+
+    if (existingTargetItem) {
+      // SCENARIO: User changes "500g" to "1kg", but "1kg" is already in cart.
+      // ACTION: Merge amounts (add current amount to target) and remove the old one.
+      const newCart = cart
+        .map((item) => {
+          if (
+            item.id === id &&
+            item.selectedWeight === newWeight &&
+            item.selectedFlavor === newFlavor
+          ) {
+            return { ...item, amount: item.amount + currentItem.amount };
+          }
+          return item;
+        })
+        .filter(
+          (item) =>
+            !(
+              item.id === id &&
+              item.selectedWeight === oldWeight &&
+              item.selectedFlavor === oldFlavor
+            )
+        );
+      setCart(newCart);
     } else {
-      removeFromCart(id, selectedWeight);
+      // SCENARIO: Target config doesn't exist.
+      // ACTION: Just update the properties of the current item.
+      const newCart = cart.map((item) => {
+        if (
+          item.id === id &&
+          item.selectedWeight === oldWeight &&
+          item.selectedFlavor === oldFlavor
+        ) {
+          return {
+            ...item,
+            selectedWeight: newWeight,
+            selectedFlavor: newFlavor,
+            price: newPrice, // Update the price!
+          };
+        }
+        return item;
+      });
+      setCart(newCart);
     }
   };
 
@@ -114,6 +200,7 @@ const CartProvider = ({ children }) => {
         clearCart,
         increaseAmount,
         decreaseAmount,
+        updateItemVariant, // Exporting new function
       }}
     >
       {children}
